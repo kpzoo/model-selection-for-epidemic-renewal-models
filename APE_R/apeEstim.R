@@ -10,7 +10,7 @@
 
 # Inputs - incidence curve (Iday), SI distribution (sidistr), total infectiousness (Lday)
 # gamma prior R hyperparameters [a b] (Rprior), confidence (a)
-# Output - elimination probability (z), sequence of probabilities (zseq), mean R (Rz)
+# Output - list of best model and best window size for APE and PMSE
 
 apeEstim <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr){
   
@@ -29,7 +29,7 @@ apeEstim <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr){
   # For every window length compute R estimate and I predictions
   for(i in 1:lenk){
     # Compute APE(k), output is [[ape, pmse, prob, Rhat, Rhatci, Inex, Inexci]]
-    apeSet[[i]] = apePredPost(k[i], sidistr, Lday, Iday, Rprior, tday, a, trunctime)
+    apeSet[[i]] = apePredPost(k[i], sidistr, Lday, Iday, Rprior, a, trunctime)
     # Metrics for squared error
     ape[i] = apeSet[[i]][[1]]; pmse[i] = apeSet[[i]][[2]]
   }

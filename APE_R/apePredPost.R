@@ -15,22 +15,25 @@
 # Output - APE score (ape), prob of next data (prob), R(t) estimate mean and confidence (Rhat, Rhatci), 
 # I(t+1) prediction mean and confidence (Inexhat, Inexci)
 
-apePredPost <- function(k, sidistr, Lday, Iday, Rprior, tmax, a, trunc){
+apePredPost <- function(k, sidistr, Lday, Iday, Rprior, a, trunc){
   
-  # Time over which estimation done
-  idPts = seq(trunc, tmax-1); nPts = length(idPts)
+  # Length of time vector to consider
+  nPts = length(Iday)
+  # Range of index time points - starts from trunc
+  ir = seq(trunc, nPts-1)
+  
   # Grouped incidence and infectiousness
-  B = rep(0, nPts); A = B;
+  B = rep(0, nPts-1); A = B;
   
   # Offset Lday so for next point i.e. t+1
-  Lday = Lday[2:length(Lday)] 
+  #Lday = Lday[2:length(Lday)] 
   
   # At each time before compute historical R
-  for(i in 1:nPts){
-    # Max window time, truncate if negative going backwards
-    idmax = max(idPts[i] - k + 1, 1)
+  for(i in seq(1, nPts-1)){
+    # Most ancient window time, truncate if negative
+    idlast = max(i - k + 1, 1)
     # Look-back window of k (or less) indices
-    idback = seq(idPts[i], idmax, -1) 
+    idback = seq(i, idlast, -1) 
     # Relevant incidence sum (B) and total infectiousness sum (A)
     B[i] = sum(Iday[idback]); A[i] = sum(Lday[idback]);
   }
@@ -38,8 +41,12 @@ apePredPost <- function(k, sidistr, Lday, Iday, Rprior, tmax, a, trunc){
   # Shape-scale gamma R(t) parameters
   alpha = Rprior[1] + B
   beta = 1./(1/Rprior[2] + A)
+  
+  # Truncate vectors
+  alpha = alpha[ir]; beta = beta[ir]
+  
   # Posterior predictive negative binomial parameter
-  pr = Lday[idPts]*beta; pr = pr/(1 + pr)
+  pr = Lday[ir]*beta; pr = pr/(1 + pr)
   
   # Posterior mean estimate of R(t)
   Rhat = alpha*beta
@@ -49,7 +56,7 @@ apePredPost <- function(k, sidistr, Lday, Iday, Rprior, tmax, a, trunc){
   Rhatci[2,] = qgamma(1-a, shape = alpha, scale = beta)
   
   # Posterior mean prediction of I(t+1)
-  Inexhat = Lday[idPts]*Rhat # check Lam[i] is for i+1 prediction <---
+  Inexhat = Lday[ir]*Rhat # check Lam[i] is for i+1 prediction <---
   #Inexhat = qnbinom(0.5, size = alpha, prob = 1-pr) 
   
   # Confidence interval (95%) on I(t+1) projection
@@ -58,16 +65,11 @@ apePredPost <- function(k, sidistr, Lday, Iday, Rprior, tmax, a, trunc){
   Inexci[2,] = qnbinom(1-a, size = alpha, prob = 1-pr) 
   
   # Probability of next incidence value at t+1s
-  prob = dnbinom(Iday[seq(trunc+1, tmax)], size = alpha, prob = pr)
+  prob = dnbinom(Iday[ir+1], size = alpha, prob = 1-pr)
   # APE score at this k, assume log 1/0 = 0 <----- check
   ape = -sum(log(prob[prob != 0]))
   # PMSE score
-  pmse = sum((Inexhat - Iday[seq(trunc+1, tmax)])^2)
-  
-  # Flag zero probabilities
-  if(any(prob == 0)){
-   # print(paste0(c('Zero prediction probs at:', k), collapse = ' '))
-  }
+  pmse = sum((Inexhat - Iday[ir+1])^2)
   
   # Main outputs including parameters
   apePredPost = list(ape, pmse, prob, Rhat, Rhatci, Inexhat, Inexci, alpha, beta, pr)
