@@ -12,7 +12,7 @@
 # gamma prior R hyperparameters [a b] (Rprior), confidence (a)
 # Output - list of best model and best window size for APE and PMSE
 
-apeEstim <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr){
+apeEstim <- function(Iday, sidistr, Lday, Rprior, a, trunctime, folres){
   
   # Decide to plot
   wantPlot = 1
@@ -40,21 +40,22 @@ apeEstim <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr){
   best2 = which.min(pmse); kbest2 = k[best2]
   modBest2 = apeSet[[best2]]
   
-  # Plot ape curve vs k
+  # Plot ape and pmse curve vs k (normalised by maxima)
   if(wantPlot){
-    # setEPS()
-    # postscript(paste0(c('ape_pmse_', idStr, '.eps'), collapse = ''))
+    pdf(file=paste0(folres, 'ape_pmse', '.pdf')) 
     
-    quartz()
-    par(mfrow=c(2,1))
-    plot(k, ape, type = "l", bty = 'l', lwd = 2, col='red',
-         xlab = paste0("k (k* = ", kbest1, ")"), ylab = 'APE')
-    lines(c(kbest1, kbest1), c(min(ape),max(ape)), col = 'black', type = "h", lwd = 2)
-
-    plot(k, pmse, type = "l", bty = 'l', lwd = 2, col='red',
-         xlab = paste0("k (k* = ", kbest2, ")"), ylab = 'PMSE')
-    lines(c(kbest2, kbest2), c(min(pmse),max(pmse)), col = 'black', type = "h", lwd = 2)
-    dev.copy2eps(file=paste0(c('ape_pmse_', idStr, '.eps'), collapse = ''))
+    # Normalisation
+    apeN = ape/max(ape); pmseN = pmse/max(pmse)
+    # Smallest and largest values
+    metMin = min(min(apeN), min(pmseN)); metMax = 1
+    
+    plot(k, apeN, type = "l", bty = 'l', lwd = 2, col='red',
+         xlab = 'window size (k)', ylab = 'metric', ylim = c(metMin, metMax))
+    lines(c(kbest1, kbest1), c(metMin,metMax), col = 'red', type = "h", lwd = 2, lty = 'dashed')
+    lines(k, pmseN, col = 'blue', lwd = 2)
+    lines(c(kbest2, kbest2), c(metMin,metMax), col = 'blue', type = "h", lwd = 2, lty = 'dashed')
+    legend('bottomright', legend = c(paste0("APE: k* = ", kbest1), paste0("PMSE: k* = ", kbest2)), lty = c(1,1), col = c('red', 'blue'), lwd = c(2,2))
+    dev.off()
   }
   
   # Output is best model and k

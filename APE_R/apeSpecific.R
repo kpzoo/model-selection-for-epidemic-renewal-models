@@ -12,7 +12,7 @@
 # gamma prior R hyperparameters [a b] (Rprior), confidence (a)
 # Output - list of best model and best window size for APE and PMSE
 
-apeSpecific <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr, k){
+apeSpecific <- function(Iday, sidistr, Lday, Rprior, a, trunctime, k){
   
   # Decide to plot
   wantPlot = 1
@@ -20,7 +20,7 @@ apeSpecific <- function(Iday, sidistr, Lday, Rprior, a, trunctime, idStr, k){
   # No. time points considered
   tday = length(Iday)
   # Possible window lengths
-  print(paste0(c('Window is:', k), collapse = ' '))
+  print(paste0(c('Window fixed at:', k), collapse = ' '))
   
   # Compute APE(k), output is [[ape, pmse, prob, Rhat, Rhatci, Inex, Inexcim alpha, beta, pr]]
   apeSet = apePredPost(k, sidistr, Lday, Iday, Rprior, a, trunctime)

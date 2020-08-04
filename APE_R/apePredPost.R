@@ -50,19 +50,26 @@ apePredPost <- function(k, sidistr, Lday, Iday, Rprior, a, trunc){
   
   # Posterior mean estimate of R(t)
   Rhat = alpha*beta
-  # Confidence interval (95%) on R(t) estimate
-  Rhatci = matrix(-1, 2, length(Rhat))
+  
+  # Confidence interval of R(t) estimate based on a setting
+  Rhatci = matrix(-1, 4, length(Rhat))
   Rhatci[1,] = qgamma(a, shape = alpha, scale = beta)
   Rhatci[2,] = qgamma(1-a, shape = alpha, scale = beta)
+  # Additional 50% interval on R(t)
+  Rhatci[3,] = qgamma(0.25, shape = alpha, scale = beta)
+  Rhatci[4,] = qgamma(0.75, shape = alpha, scale = beta)
   
   # Posterior mean prediction of I(t+1)
   Inexhat = Lday[ir]*Rhat # check Lam[i] is for i+1 prediction <---
   #Inexhat = qnbinom(0.5, size = alpha, prob = 1-pr) 
   
   # Confidence interval (95%) on I(t+1) projection
-  Inexci = matrix(-1, 2, length(Inexhat))
+  Inexci = matrix(-1, 4, length(Inexhat))
   Inexci[1,] = qnbinom(a, size = alpha, prob = 1-pr) 
   Inexci[2,] = qnbinom(1-a, size = alpha, prob = 1-pr) 
+  # Additional 50% interval on I(t+1)
+  Inexci[3,] = qnbinom(0.25, size = alpha, prob = 1-pr) 
+  Inexci[4,] = qnbinom(0.75, size = alpha, prob = 1-pr) 
   
   # Probability of next incidence value at t+1s
   prob = dnbinom(Iday[ir+1], size = alpha, prob = 1-pr)
